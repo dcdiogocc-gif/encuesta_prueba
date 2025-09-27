@@ -1,4 +1,18 @@
 import streamlit as st
+import sqlite3
+
+# Configuración de la base de datos
+conn = sqlite3.connect("encuesta.db")
+c = conn.cursor()
+c.execute("""
+    CREATE TABLE IF NOT EXISTS respuestas (
+        nombre TEXT,
+        edad INTEGER,
+        ciudad TEXT,
+        tecnologia TEXT
+    )
+""")
+conn.commit()
 
 # Título de la aplicación
 st.title("Encuesta Interactiva")
@@ -10,11 +24,18 @@ edad = st.number_input("¿Cuántos años tienes?", min_value=0, max_value=120, s
 ciudad = st.text_input("¿Cuál es tu ciudad de residencia?")
 tecnologia = st.radio("¿Te gusta la tecnología?", ["Sí", "No"])
 
-# Mostrar las respuestas al final
+# Guardar respuestas en la base de datos
 if st.button("Enviar respuestas"):
-    st.subheader("Tus respuestas:")
-    st.write(f"Nombre: {nombre}")
-    st.write(f"Edad: {edad}")
-    st.write(f"Ciudad de residencia: {ciudad}")
-    st.write(f"¿Te gusta la tecnología?: {tecnologia}")
-    st.success("¡Gracias por participar en la encuesta!")
+    c.execute("INSERT INTO respuestas (nombre, edad, ciudad, tecnologia) VALUES (?, ?, ?, ?)", 
+              (nombre, edad, ciudad, tecnologia))
+    conn.commit()
+    st.success("¡Gracias por participar en la encuesta! Tus respuestas han sido guardadas.")
+
+# Mostrar las respuestas almacenadas
+if st.button("Ver respuestas"):
+    st.subheader("Respuestas almacenadas:")
+    c.execute("SELECT * FROM respuestas")
+    datos = c.fetchall()
+    for fila in datos:
+        st.write(fila)
+
